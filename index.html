@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>金田会もどき エピソード III - チュニジアを喰らう</title>
+<meta property="og:title" content="金田会もどき エピソードIII - チュニジアを喰らう">
+<meta property="og:description" content="2026年6月21日 FIFAワールドカップ史上1000試合目 侍ジャパン第2戦 観戦懇親会">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body, #root { width: 100%; min-height: 100vh; background: #0a0a2e; }
+  body { overflow-x: hidden; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const PIXEL_FONT = "'Press Start 2P', monospace";
+
+// DQ-style color palette
+const COLORS = {
+  bg: "#0a0a2e",
+  windowBg: "#000033",
+  windowBorder: "#f8f8f8",
+  windowBorderInner: "#8888cc",
+  text: "#f8f8f8",
+  textGold: "#f8d830",
+  textBlue: "#88bbff",
+  textRed: "#f85858",
+  textGreen: "#58f858",
+  cursor: "#f8f8f8",
+  shadow: "rgba(0,0,0,0.6)",
+  tunisiaRed: "#e70013",
+  japanRed: "#bc002d",
+  flame: "#ff6600",
+};
+
+// 調整さんURL（イベント作成後にここを差し替える）
+const CHOUSEISAN_URL = "https://chouseisan.com/s?h=XXXXXXXX";
+
+// Typewriter text component
+function TypeWriter({ text, speed = 40, onComplete, style, delay = 0 }) {
+  const [displayed, setDisplayed] = useState("");
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const delayTimer = setTimeout(() => setStarted(true), delay);
+    return () => clearTimeout(delayTimer);
+  }, [delay]);
+
+  useEffect(() => {
+    if (!started) return;
+    if (displayed.length < text.length) {
+      const timer = setTimeout(() => {
+        setDisplayed(text.slice(0, displayed.length + 1));
+      }, speed);
+      return () => clearTimeout(timer);
+    } else {
+      onComplete?.();
+    }
+  }, [displayed, text, speed, started, onComplete]);
+
+  return <span style={style}>{displayed}<span style={{ opacity: displayed.length < text.length ? 1 : 0, animation: "blink 0.5s infinite" }}>▼</span></span>;
+}
+
+// DQ-style window frame
+function DQWindow({ children, style, title, animate = true }) {
+  const [visible, setVisible] = useState(!animate);
+
+  useEffect(() => {
+    if (animate) {
+      const t = setTimeout(() => setVisible(true), 200);
+      return () => clearTimeout(t);
+    }
+  }, [animate]);
+
+  return (
+    <div
+      style={{
+        border: `3px solid ${COLORS.windowBorder}`,
+        borderRadius: "12px",
+        background: COLORS.windowBg,
+        padding: "16px 20px",
+        position: "relative",
+        boxShadow: `inset 0 0 0 2px ${COLORS.windowBorderInner}, 0 4px 20px ${COLORS.shadow}`,
+        opacity: visible ? 1 : 0,
+        transform: visible ? "scale(1)" : "scale(0.8)",
+        transition: "all 0.3s ease-out",
+        ...style,
+      }}
+    >
+      {title && (
+        <div style={{
+          position: "absolute",
+          top: "-10px",
+          left: "16px",
+          background: COLORS.windowBg,
+          padding: "0 8px",
+          fontSize: "10px",
+          color: COLORS.textGold,
+          fontFamily: PIXEL_FONT,
+          letterSpacing: "2px",
+        }}>
+          {title}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+// Pixel art flame
+function PixelFlame({ size = 80 }) {
+  const [frame, setFrame] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setFrame(f => (f + 1) % 3), 200);
+    return () => clearInterval(interval);
+  }, []);
+
+  const flames = [
+    // Frame 0
+    [
+      "    🔥    ",
+      "   🔥🔥   ",
+      "  🟥🔥🟥  ",
+      " 🟥🟧🟥🟥 ",
+      "🟧🟧🟥🟧🟧",
+    ],
+    // Frame 1
+    [
+      "   🔥🔥   ",
+      "  🔥🔥🔥  ",
+      " 🟥🔥🟥🟥 ",
+      "🟥🟧🟧🟥🟧",
+      "🟧🟧🟧🟧🟧",
+    ],
+    // Frame 2
+    [
+      "  🔥      ",
+      "   🔥🔥   ",
+      "  🟥🔥🟥  ",
+      "🟥🟧🟥🟧🟥",
+      "🟧🟧🟧🟧🟧",
+    ],
+  ];
+
+  return (
+    <div style={{
+      fontFamily: "monospace",
+      fontSize: `${size / 6}px`,
+      lineHeight: 1.1,
+      textAlign: "center",
+      filter: "drop-shadow(0 0 8px rgba(255,100,0,0.6))",
+    }}>
+      {flames[frame].map((line, i) => (
+        <div key={i}>{line}</div>
+      ))}
+    </div>
+  );
+}
+
+// Blinking cursor for command select
+function CommandCursor() {
+  return (
+    <span style={{
+      display: "inline-block",
+      animation: "blink 0.6s step-end infinite",
+      marginRight: "6px",
+      color: COLORS.text,
+    }}>▶</span>
+  );
+}
+
+// Pixel art soccer ball
+function PixelBall() {
+  return (
+    <span style={{ fontSize: "20px", animation: "bounce 0.8s infinite alternate" }}>⚽</span>
+  );
+}
+
+// Monster sprite (Tunisia flag themed)
+function MonsterSprite() {
+  const [bob, setBob] = useState(false);
+  useEffect(() => {
+    const interval = setInterval(() => setBob(b => !b), 600);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div style={{
+      textAlign: "center",
+      transform: bob ? "translateY(-4px)" : "translateY(4px)",
+      transition: "transform 0.3s ease-in-out",
+    }}>
+      <div style={{ fontSize: "12px", fontFamily: PIXEL_FONT, color: COLORS.textRed, marginBottom: "8px", letterSpacing: "2px" }}>
+        ★ チュニジア が あらわれた！ ★
+      </div>
+      <div style={{ fontSize: "64px", lineHeight: 1, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }}>
+        🇹🇳
+      </div>
+      <div style={{
+        marginTop: "8px",
+        fontSize: "9px",
+        fontFamily: PIXEL_FONT,
+        color: COLORS.textBlue,
+        letterSpacing: "1px",
+      }}>
+        FIFA W杯 史上1000試合目
+      </div>
+    </div>
+  );
+}
+
+// Main scenes
+const SCENES = {
+  TITLE: "title",
+  CASTLE: "castle",
+  BATTLE: "battle",
+  STATUS: "status",
+  RECIPE: "recipe",
+  JOIN: "join",
+  ENDING: "ending",
+};
+
+function TunisiaQuestFlyer() {
+  const [scene, setScene] = useState(SCENES.TITLE);
+  const [titleReady, setTitleReady] = useState(false);
+  const [selectedCmd, setSelectedCmd] = useState(0);
+  const [joinConfirm, setJoinConfirm] = useState(false);
+  const [castleLine, setCastleLine] = useState(0);
+  const [endingStep, setEndingStep] = useState(0);
+
+  // Title screen auto-advance
+  useEffect(() => {
+    if (scene === SCENES.TITLE) {
+      const t = setTimeout(() => setTitleReady(true), 800);
+      return () => clearTimeout(t);
+    }
+  }, [scene]);
+
+  // Reset castle dialogue when entering
+  useEffect(() => {
+    if (scene === SCENES.CASTLE) {
+      setCastleLine(0);
+    }
+  }, [scene]);
+
+  const commands = [
+    { label: "たたかう", desc: "イベント詳細を見る", action: () => setScene(SCENES.STATUS) },
+    { label: "せってい", desc: "メニューを見る", action: () => setScene(SCENES.RECIPE) },
+    { label: "さんかする", desc: "参加表明する", action: () => setScene(SCENES.JOIN) },
+    { label: "さんかしない", desc: "またの機会に…", action: () => setScene(SCENES.ENDING) },
+  ];
+
+  // Title Screen
+  if (scene === SCENES.TITLE) {
+    return (
+      <div style={styles.container}>
+        <style>{globalStyles}</style>
+        <div style={styles.titleScreen}>
+          <div style={{ marginBottom: "24px" }}>
+            <PixelFlame size={100} />
+          </div>
+          <div style={{
+            fontFamily: PIXEL_FONT,
+            fontSize: "10px",
+            color: COLORS.textGold,
+            letterSpacing: "3px",
+            marginBottom: "12px",
+            animation: "fadeIn 1s ease-out",
+          }}>
+            金田会もどき エピソード III
+          </div>
+          <h1 style={{
+            fontFamily: PIXEL_FONT,
+            fontSize: "22px",
+            color: COLORS.text,
+            textShadow: `2px 2px 0 ${COLORS.tunisiaRed}, 4px 4px 0 rgba(0,0,0,0.5)`,
+            margin: "0 0 8px 0",
+            animation: "fadeIn 1.5s ease-out",
+            lineHeight: 1.6,
+          }}>
+            チュニジアを<br/>喰らう
+          </h1>
+          <div style={{
+            fontFamily: PIXEL_FONT,
+            fontSize: "9px",
+            color: COLORS.textBlue,
+            marginBottom: "32px",
+            animation: "fadeIn 2s ease-out",
+          }}>
+            〜 赤と白の おつまみで 相手を 喰らい尽くす 秘策 〜
+          </div>
+          {titleReady && (
+            <div
+              onClick={() => setScene(SCENES.CASTLE)}
+              style={{
+                fontFamily: PIXEL_FONT,
+                fontSize: "12px",
+                color: COLORS.text,
+                cursor: "pointer",
+                animation: "blink 1.2s infinite",
+                padding: "12px 24px",
+                border: `2px solid ${COLORS.windowBorder}`,
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.05)",
+              }}
+            >
+              ▶ PRESS START
+            </div>
+          )}
+          <div style={{
+            position: "absolute",
+            bottom: "16px",
+            fontFamily: PIXEL_FONT,
+            fontSize: "8px",
+            color: "rgba(255,255,255,0.3)",
+            letterSpacing: "1px",
+          }}>
+            © 2026 HASEBE QUEST
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Castle scene - 王様の謁見
+  const castleDialogues = [
+    "おお 勇者よ、\nよくぞ 参った！",
+    "2026年6月21日…\nW杯史上 1000試合目の\n大いなる戦いが 迫っておる。",
+    "チュニジアを 喰らい尽くす\n宴の 準備を せよ！",
+    "赤と白の おつまみを 携え\n台東区の 砦に 集結するのじゃ。",
+    "くわしくは\n追って ラーミアが届けるぞ。\nたのんだぞ 勇者よ！",
+  ];
+
+  if (scene === SCENES.CASTLE) {
+    return (
+      <div style={styles.container}>
+        <style>{globalStyles}</style>
+        <div style={styles.innerContainer}>
+          {/* Castle background */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "120px",
+            background: "linear-gradient(180deg, #1a1a3e 0%, #2a2a5e 50%, #3a2a1e 100%)",
+            borderRadius: "12px",
+            marginBottom: "12px",
+            padding: "20px",
+            position: "relative",
+          }}>
+            {/* Throne decorations */}
+            <div style={{ fontSize: "10px", fontFamily: PIXEL_FONT, color: COLORS.textGold, letterSpacing: "3px", marginBottom: "8px" }}>
+              🏰 ハセベ城 🏰
+            </div>
+            <div style={{
+              fontSize: "56px",
+              lineHeight: 1,
+              filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))",
+            }}>
+              👑
+            </div>
+            <div style={{
+              fontSize: "8px",
+              fontFamily: PIXEL_FONT,
+              color: COLORS.textBlue,
+              marginTop: "8px",
+            }}>
+              おうさま ハセベ
+            </div>
+          </div>
+
+          {/* Dialogue window */}
+          <DQWindow animate={false} style={{ marginBottom: "12px", minHeight: "100px" }}>
+            <div style={{
+              fontFamily: PIXEL_FONT,
+              fontSize: "10px",
+              color: COLORS.text,
+              lineHeight: 2.4,
+              whiteSpace: "pre-line",
+              minHeight: "80px",
+            }}>
+              <TypeWriter
+                text={castleDialogues[castleLine]}
+                speed={45}
+                key={castleLine}
+              />
+            </div>
+          </DQWindow>
+
+          {/* Advance / proceed buttons */}
+          {castleLine < castleDialogues.length - 1 ? (
+            <div
+              onClick={() => setCastleLine(l => l + 1)}
+              style={{
+                fontFamily: PIXEL_FONT,
+                fontSize: "10px",
+                color: COLORS.text,
+                cursor: "pointer",
+                textAlign: "center",
+                padding: "12px",
+                border: `2px solid ${COLORS.windowBorder}`,
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.03)",
+              }}
+            >
+              ▶ つぎへ
+            </div>
+          ) : (
+            <div
+              onClick={() => setScene(SCENES.BATTLE)}
+              style={{
+                fontFamily: PIXEL_FONT,
+                fontSize: "11px",
+                color: COLORS.textGold,
+                cursor: "pointer",
+                textAlign: "center",
+                padding: "14px",
+                border: `2px solid ${COLORS.textGold}`,
+                borderRadius: "8px",
+                background: "rgba(248,216,48,0.08)",
+                animation: "blink 1.5s infinite",
+              }}
+            >
+              ▶ ぼうけんに でる
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Join screen
+  if (scene === SCENES.JOIN) {
+    return (
+      <div style={styles.container}>
+        <style>{globalStyles}</style>
+        <div style={styles.innerContainer}>
+          <DQWindow style={{ marginBottom: "16px", textAlign: "center" }}>
+            <div style={{ fontFamily: PIXEL_FONT, fontSize: "10px", color: COLORS.textGold, marginBottom: "16px", lineHeight: 2 }}>
+              ★ さんかひょうめい ★
+            </div>
+            <div style={{ fontFamily: PIXEL_FONT, fontSize: "10px", color: COLORS.text, lineHeight: 2.4, marginBottom: "16px" }}>
+              {joinConfirm ? (
+                <>
+                  <span style={{ color: COLORS.textGreen }}>「はい」を えらんだ！</span><br/>
+                  <br/>
+                  <span style={{ fontSize: "9px" }}>
+                    調整さん で<br/>
+                    参加可能な日程を<br/>
+                    登録してください。
+                  </span><br/>
+                  <br/>
+                  <a
+                    href={CHOUSEISAN_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-block",
+                      fontFamily: PIXEL_FONT,
+                      fontSize: "11px",
+                      color: COLORS.textGold,
+                      textDecoration: "none",
+                      padding: "12px 24px",
+                      border: `2px solid ${COLORS.textGold}`,
+                      borderRadius: "8px",
+                      background: "rgba(248,216,48,0.1)",
+                      animation: "blink 1.5s infinite",
+                      cursor: "pointer",
+                    }}
+                  >
+                    ▶ 調整さんを ひらく
+                  </a>
+                  <br/><br/>
+                  <span style={{ color: COLORS.textBlue, fontSize: "8px" }}>
+                    前回参加者の皆様へ。<br/>
+                    ご興味のある方は<br/>
+                    ご一報ください。
+                  </span>
+                </>
+              ) : (
+                <>
+                  チュニジアを喰らう会 に<br/>
+                  さんかしますか？
+                </>
+              )}
+            </div>
+            {!joinConfirm && (
+              <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
+                <div
+                  onClick={() => setJoinConfirm(true)}
+                  style={styles.yesNoBtn}
+                >
+                  <CommandCursor /> はい
+                </div>
+                <div
+                  onClick={() => {
+                    setScene(SCENES.BATTLE);
+                    setJoinConfirm(false);
+                  }}
+                  style={styles.yesNoBtn}
+                >
+                  いいえ
+                </div>
+              </div>
+            )}
+            {joinConfirm && (
+              <div style={{ marginTop: "8px" }}>
+                <PixelBall />
+              </div>
+            )}
+          </DQWindow>
+          <div
+            onClick={() => {
+              setScene(SCENES.BATTLE);
+              setJoinConfirm(false);
+            }}
+            style={styles.backBtn}
+          >
+            ▶ もどる
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Status screen
+  if (scene === SCENES.STATUS) {
+    return (
+      <div style={styles.container}>
+        <style>{globalStyles}</style>
+        <div style={styles.innerContainer}>
+          <DQWindow title="イベントじょうほう" style={{ marginBottom: "12px" }}>
+            <div style={{ fontFamily: PIXEL_FONT, fontSize: "9px", color: COLORS.text, lineHeight: 2.8 }}>
+              <span style={{ color: COLORS.textGold }}>■ にちじ</span><br/>
+              　2026年6月21日（日）<br/>
+              　10:00〜18:00<br/>
+              <br/>
+              <span style={{ color: COLORS.textGold }}>■ キックオフ</span><br/>
+              　13:00（日本時間）<br/>
+              <br/>
+              <span style={{ color: COLORS.textGold }}>■ たいせん</span><br/>
+              　🇯🇵 にほん vs チュニジア 🇹🇳<br/>
+              　グループF 第2戦<br/>
+              <br/>
+              <span style={{ color: COLORS.textGold }}>■ かいじょう</span><br/>
+              　台東区<br/>
+              　キッチン付き完全貸切スペース<br/>
+              <br/>
+              <span style={{ color: COLORS.textGold }}>■ コンセプト</span><br/>
+              　赤と白のおつまみで<br/>
+              　相手を喰らい尽くす秘策。<br/>
+              　準備からゆったり、<br/>
+              　静かに、しかし熱く。
+            </div>
+          </DQWindow>
+
+          <DQWindow title="グループF" style={{ marginBottom: "12px" }}>
+            <div style={{ fontFamily: PIXEL_FONT, fontSize: "9px", color: COLORS.text, lineHeight: 2.4 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                <span>🇳🇱 オランダ</span>
+                <span style={{ color: COLORS.textBlue }}>POT 1</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                <span style={{ color: COLORS.textGreen }}>🇯🇵 にほん</span>
+                <span style={{ color: COLORS.textBlue }}>POT 2</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                <span>🇸🇪 スウェーデン</span>
+                <span style={{ color: COLORS.textBlue }}>POT 3</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: COLORS.textRed }}>🇹🇳 チュニジア</span>
+                <span style={{ color: COLORS.textBlue }}>POT 4</span>
+              </div>
+            </div>
+          </DQWindow>
+
+          <DQWindow title="にってい">
+            <div style={{ fontFamily: PIXEL_FONT, fontSize: "8px", color: COLORS.text, lineHeight: 2.6 }}>
+              <span style={{ color: COLORS.textRed }}>第1戦</span> 6/14 🇳🇱vsにほん🇯🇵<br/>
+              <span style={{ color: COLORS.textGold }}>第2戦</span> 6/21 🇹🇳vsにほん🇯🇵 ◀いまここ<br/>
+              <span style={{ color: COLORS.textBlue }}>第3戦</span> 6/25 にほん🇯🇵vs🇸🇪
+            </div>
+          </DQWindow>
+
+          <div
+            onClick={() => setScene(SCENES.BATTLE)}
+            style={styles.backBtn}
+          >
+            ▶ もどる
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Recipe screen
+  if (scene === SCENES.RECIPE) {
+    return (
+      <div style={styles.container}>
+        <style>{globalStyles}</style>
+        <div style={styles.innerContainer}>
+          <DQWindow title="メニュー" style={{ marginBottom: "12px" }}>
+            <div style={{ fontFamily: PIXEL_FONT, fontSize: "9px", color: COLORS.text, lineHeight: 2.8 }}>
+              <span style={{ color: COLORS.textGold }}>★ メインウェポン</span><br/>
+              　<span style={{ color: COLORS.textGreen }}>ブリック</span>（チュニジア風揚げパイ）<br/>
+              　ツナと卵の伝統レシピ<br/>
+              　揚げたて熱々を手づかみで<br/>
+              <br/>
+              <span style={{ color: COLORS.textGold }}>★ テーマカラー</span><br/>
+              　<span style={{ color: COLORS.textRed }}>赤</span>：ハリッサ / トマト / パプリカ<br/>
+              　<span style={{ color: COLORS.text }}>白</span>：フムス / ラブネ / レモン<br/>
+              <br/>
+              <span style={{ color: COLORS.textGold }}>★ サイドクエスト</span><br/>
+              　メシュイヤサラダ<br/>
+              　シャクシューカ<br/>
+              　ミントティー<br/>
+            </div>
+          </DQWindow>
+
+          <div
+            onClick={() => setScene(SCENES.BATTLE)}
+            style={styles.backBtn}
+          >
+            ▶ もどる
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Ending screen
+  if (scene === SCENES.ENDING) {
+    return (
+      <div style={styles.container}>
+        <style>{globalStyles}</style>
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "80vh",
+          textAlign: "center",
+          animation: "fadeIn 1.5s ease-out",
+        }}>
+          {/* Sunset gradient background */}
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(180deg, #0a0a2e 0%, #1a1040 20%, #2a1830 40%, #4a2020 60%, #6a3010 75%, #c85020 90%, #f88030 100%)",
+            opacity: 0.3,
+            zIndex: 0,
+          }} />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{
+              fontSize: "48px",
+              marginBottom: "24px",
+              animation: "fadeIn 2s ease-out",
+            }}>
+              🌅
+            </div>
+
+            <DQWindow style={{ marginBottom: "24px", maxWidth: "340px" }}>
+              <div style={{
+                fontFamily: PIXEL_FONT,
+                fontSize: "10px",
+                color: COLORS.text,
+                lineHeight: 2.8,
+              }}>
+                <TypeWriter
+                  text={"またの機会を\nお待ちしております。\n\nそして でんせつは つづく…"}
+                  speed={60}
+                  key="ending"
+                />
+              </div>
+            </DQWindow>
+
+            <div style={{
+              fontFamily: PIXEL_FONT,
+              fontSize: "9px",
+              color: COLORS.textGold,
+              letterSpacing: "4px",
+              animation: "fadeIn 4s ease-out",
+              marginBottom: "32px",
+            }}>
+              - F I N -
+            </div>
+
+            <div
+              onClick={() => {
+                setEndingStep(0);
+                setScene(SCENES.TITLE);
+              }}
+              style={{
+                fontFamily: PIXEL_FONT,
+                fontSize: "9px",
+                color: COLORS.textBlue,
+                cursor: "pointer",
+                padding: "10px 20px",
+                border: `1px solid ${COLORS.windowBorderInner}`,
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.03)",
+              }}
+            >
+              ▶ タイトルに もどる
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Battle screen (main menu)
+  return (
+    <div style={styles.container}>
+      <style>{globalStyles}</style>
+      <div style={styles.innerContainer}>
+        {/* Monster area */}
+        <div style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "180px",
+          background: "linear-gradient(180deg, #0a0a2e 0%, #1a1a4e 40%, #2a1a0e 80%, #1a0a0a 100%)",
+          borderRadius: "12px",
+          marginBottom: "12px",
+          padding: "20px",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Stars */}
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                width: "2px",
+                height: "2px",
+                background: COLORS.text,
+                borderRadius: "50%",
+                top: `${Math.random() * 60}%`,
+                left: `${Math.random() * 100}%`,
+                opacity: Math.random() * 0.8 + 0.2,
+                animation: `twinkle ${1 + Math.random() * 2}s infinite alternate`,
+              }}
+            />
+          ))}
+          <MonsterSprite />
+        </div>
+
+        {/* Message window */}
+        <DQWindow style={{ marginBottom: "12px", minHeight: "60px" }} animate={false}>
+          <div style={{ fontFamily: PIXEL_FONT, fontSize: "10px", color: COLORS.text, lineHeight: 2.2 }}>
+            <TypeWriter
+              text="2026年6月21日（日） 侍ジャパン第2戦 チュニジアを喰らう観戦懇親会。 コマンドを選んでください。"
+              speed={30}
+              key={scene}
+            />
+          </div>
+        </DQWindow>
+
+        {/* Command window */}
+        <DQWindow title="コマンド" animate={false}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            {commands.map((cmd, i) => (
+              <div
+                key={i}
+                onClick={cmd.action}
+                onMouseEnter={() => setSelectedCmd(i)}
+                style={{
+                  fontFamily: PIXEL_FONT,
+                  fontSize: "11px",
+                  color: selectedCmd === i ? COLORS.textGold : COLORS.text,
+                  cursor: "pointer",
+                  padding: "10px 8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  borderRadius: "6px",
+                  background: selectedCmd === i ? "rgba(255,255,255,0.05)" : "transparent",
+                  transition: "all 0.15s",
+                }}
+              >
+                {selectedCmd === i && <CommandCursor />}
+                {cmd.label}
+              </div>
+            ))}
+          </div>
+        </DQWindow>
+
+        {/* Footer */}
+        <div style={{
+          textAlign: "center",
+          marginTop: "12px",
+          fontFamily: PIXEL_FONT,
+          fontSize: "7px",
+          color: "rgba(255,255,255,0.3)",
+          letterSpacing: "1px",
+        }}>
+          長谷部
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    width: "100%",
+    minHeight: "100vh",
+    background: `linear-gradient(135deg, ${COLORS.bg} 0%, #0f0f3d 50%, #1a0a2e 100%)`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "16px",
+    boxSizing: "border-box",
+  },
+  titleScreen: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "80vh",
+    position: "relative",
+    animation: "fadeIn 0.5s ease-out",
+  },
+  innerContainer: {
+    width: "100%",
+    maxWidth: "420px",
+    display: "flex",
+    flexDirection: "column",
+    animation: "fadeIn 0.3s ease-out",
+  },
+  backBtn: {
+    fontFamily: PIXEL_FONT,
+    fontSize: "10px",
+    color: COLORS.textBlue,
+    cursor: "pointer",
+    textAlign: "center",
+    padding: "12px",
+    marginTop: "8px",
+    border: `2px solid ${COLORS.windowBorderInner}`,
+    borderRadius: "8px",
+    background: "rgba(255,255,255,0.03)",
+  },
+  yesNoBtn: {
+    fontFamily: PIXEL_FONT,
+    fontSize: "11px",
+    color: COLORS.text,
+    cursor: "pointer",
+    padding: "10px 20px",
+    border: `2px solid ${COLORS.windowBorder}`,
+    borderRadius: "8px",
+    background: "rgba(255,255,255,0.05)",
+  },
+};
+
+const globalStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-6px); }
+  }
+
+  @keyframes twinkle {
+    from { opacity: 0.2; }
+    to { opacity: 1; }
+  }
+
+  * {
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: unset;
+    image-rendering: pixelated;
+  }
+`;
+
+
+ReactDOM.createRoot(document.getElementById("root")).render(<TunisiaQuestFlyer />);
+</script>
+</body>
+</html>
